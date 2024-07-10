@@ -25,7 +25,12 @@ type OpenAIResponse struct {
 	} `json:"choices"`
 }
 
-func main() {
+type Config struct {
+	APIKey string
+	Prompt string
+}
+
+func setup() Config{
     err := godotenv.Load()
     if err != nil {
         fmt.Println("Error loading .env file")
@@ -42,12 +47,17 @@ func main() {
 		fmt.Println("Prompt is required")
 		os.Exit(1)
 	}
-
     prompt := os.Args[1]
+
+	return Config{APIKey: apiKey, Prompt: prompt}
+}
+
+func main() {
+	Config := setup()
 
 	requestBody, err := json.Marshal(OpenAIRequest{
 		Model:     "gpt-3.5-turbo-instruct",
-		Prompt:    prompt,
+		Prompt:    Config.Prompt,
 		MaxTokens: 500,
 	})
 	if err != nil {
@@ -62,7 +72,7 @@ func main() {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer " + Config.APIKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -78,7 +88,6 @@ func main() {
 		fmt.Println("Response body:", string(body))
 		return
 	}
-
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
