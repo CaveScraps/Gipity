@@ -5,6 +5,7 @@ import (
     "errors"
     "fmt"
     "os"
+    "path"
     "encoding/json"
     "net/http"
     "io"
@@ -31,26 +32,26 @@ type Config struct {
 	Prompt string
 }
 
-func setup() Config{
-    err := godotenv.Load(".gipityenv")
+func setup() (Config, error) {
+	exePath, _ := os.Executable()
+	pathOfExe := path.Dir(exePath)
+
+    err := godotenv.Load(pathOfExe + "/.gipityenv")
     if err != nil {
-        fmt.Println("Error loading .env file")
-        os.Exit(1)
+		return Config{}, errors.New("Error loading .env file: " + err.Error())
     }
 
     apiKey := os.Getenv("OPENAI_API_KEY")
     if apiKey == "" {
-        fmt.Println("OPENAI_API_KEY is not set")
-        os.Exit(1)
+		return Config{}, errors.New("OPENAI_API_KEY is not set")
     }
 
 	if(len(os.Args) < 2){
-		fmt.Println("Prompt is required")
-		os.Exit(1)
+		return Config{}, errors.New("Prompt is required")
 	}
     prompt := os.Args[1]
 
-	return Config{APIKey: apiKey, Prompt: prompt}
+	return Config{APIKey: apiKey, Prompt: prompt}, nil
 }
 
 func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error){
@@ -91,7 +92,12 @@ func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error){
 }
 
 func main() {
-	Config := setup()
+	Config, err := setup()
+	if err != nil {
+		fmt.Println("Error setting up: " + err.Error())
+		os.Exit(1)
+	}
+
 	body, err := getResponseFromOpenAI(Config.Prompt, Config.APIKey)
 	if err != nil {
 		fmt.Println("Error getting response from OpenAI: " + err.Error())
