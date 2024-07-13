@@ -1,16 +1,16 @@
-package main;
+package main
 
 import (
-    "bytes"
-    "errors"
-    "fmt"
-    "os"
-    "path"
-    "encoding/json"
-    "net/http"
-    "io"
-    "strings"
-    "github.com/joho/godotenv"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/joho/godotenv"
+	"io"
+	"net/http"
+	"os"
+	"path"
+	"strings"
 )
 
 const apiURL = "https://api.openai.com/v1/completions"
@@ -36,25 +36,25 @@ func setup() (Config, error) {
 	exePath, _ := os.Executable()
 	pathOfExe := path.Dir(exePath)
 
-    err := godotenv.Load(pathOfExe + "/.gipityenv")
-    if err != nil {
+	err := godotenv.Load(pathOfExe + "/.gipityenv")
+	if err != nil {
 		return Config{}, errors.New("Error loading .env file: " + err.Error())
-    }
+	}
 
-    apiKey := os.Getenv("OPENAI_API_KEY")
-    if apiKey == "" {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
 		return Config{}, errors.New("OPENAI_API_KEY is not set")
-    }
+	}
 
-	if(len(os.Args) < 2){
+	if len(os.Args) < 2 {
 		return Config{}, errors.New("Prompt is required")
 	}
-    prompt := os.Args[1]
+	prompt := os.Args[1]
 
 	return Config{APIKey: apiKey, Prompt: prompt}, nil
 }
 
-func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error){
+func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error) {
 	requestBody, err := json.Marshal(OpenAIRequest{
 		Model:     "gpt-3.5-turbo-instruct",
 		Prompt:    prompt,
@@ -70,7 +70,7 @@ func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error){
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer " + apiKey)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
