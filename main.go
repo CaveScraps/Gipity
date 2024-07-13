@@ -2,6 +2,7 @@ package main;
 
 import (
     "bytes"
+    "errors"
     "fmt"
     "os"
     "encoding/json"
@@ -52,54 +53,56 @@ func setup() Config{
 	return Config{APIKey: apiKey, Prompt: prompt}
 }
 
-func main() {
-	Config := setup()
-
+func getResponseFromOpenAI(prompt string, apiKey string) ([]byte, error){
 	requestBody, err := json.Marshal(OpenAIRequest{
 		Model:     "gpt-3.5-turbo-instruct",
-		Prompt:    Config.Prompt,
+		Prompt:    prompt,
 		MaxTokens: 500,
 	})
 	if err != nil {
-		fmt.Printf("Error marshalling request body: %v\n", err)
-		return
+		return nil, errors.New("Error marshalling request body: " + err.Error())
 	}
 
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
 	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
-		return
+		return nil, errors.New("Error creating request: " + err.Error())
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer " + Config.APIKey)
+	req.Header.Set("Authorization", "Bearer " + apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error making request: %v\n", err)
-		return
+		return nil, errors.New("Error making request: " + err.Error())
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Error: received non-200 response status: %d\n", resp.StatusCode)
 		body, _ := io.ReadAll(resp.Body)
-		fmt.Println("Response body:", string(body))
-		return
+		return nil, errors.New("Received non-200 response status: " + resp.Status + "\n" + string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return
+		return nil, errors.New("Error reading response body: " + err.Error())
+	}
+	return body, nil
+}
+
+func main() {
+	Config := setup()
+	body, err := getResponseFromOpenAI(Config.Prompt, Config.APIKey)
+	if err != nil {
+		fmt.Println("Error getting response from OpenAI: " + err.Error())
+		os.Exit(1)
 	}
 
 	var openAIResponse OpenAIResponse
 	err = json.Unmarshal(body, &openAIResponse)
 	if err != nil {
 		fmt.Printf("Error unmarshalling response body: %v\n", err)
-		return
+		os.Exit(1)
 	}
 
 	if len(openAIResponse.Choices) > 0 {
