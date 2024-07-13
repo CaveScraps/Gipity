@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func setup() Config{
-    err := godotenv.Load()
+    err := godotenv.Load(".gipityenv")
     if err != nil {
         fmt.Println("Error loading .env file")
         os.Exit(1)
