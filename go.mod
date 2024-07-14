@@ -1,4 +1,4 @@
-module Christopher-Ayre/Gipity
+module CaveScraps/Gipity
 
 go 1.22.4
 

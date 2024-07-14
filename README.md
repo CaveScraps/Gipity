@@ -8,7 +8,7 @@ A CLI application for sending queries to ChatGPT.
 Clone the repo, install dependencies and build.
 
 ```bash
-  git clone https://github.com/Christopher-Ayre/Gipity.git
+  git clone https://github.com/CaveScraps/Gipity.git
   cd Gipity
   go mod tidy
   go build -o gpt
